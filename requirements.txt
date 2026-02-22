@@ -9,3 +9,4 @@ cachetools
 click
 pillow
 requests
+beautifulsoup4

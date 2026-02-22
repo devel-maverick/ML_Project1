@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from preprocessing.preprocess import load_data, preprocess_entire_dataframe
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -35,3 +39,5 @@ MODEL_DIR.mkdir(exist_ok = True)
 
 joblib.dump(model, MODEL_DIR / "classifier.pkl")
 joblib.dump(vectorizer, MODEL_DIR / "vectorizer.pkl")
+print(f"\nModel saved to {MODEL_DIR / 'classifier.pkl'}")
+print(f"Vectorizer saved to {MODEL_DIR / 'vectorizer.pkl'}")
