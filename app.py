@@ -8,6 +8,9 @@ from preprocessing.preprocess import preprocess_pipeline
 import requests
 from bs4 import BeautifulSoup
 import re
+import numpy as np
+from features.feature_engineering import get_sentiment_score, get_style_features, extract_custom_features
+from src.explain import explain_prediction
 
 st.set_page_config(page_title="News Credibility Analyzer", page_icon="📰", layout="wide")
 
@@ -136,11 +139,57 @@ if analyze_btn:
                         st.metric("Credibility Score", f"{credibility_score:.2%}")
                     
                     with result_col2:
-                        color = "normal" if classification == "CREDIBLE" else "inverse"
                         st.metric("Classification", classification)
                     
                     with result_col3:
                         st.metric("Confidence", f"{confidence:.2%}")
+                    
+                    st.divider()
+                    
+                    st.subheader("Detected Patterns")
+                    
+                    sentiment = get_sentiment_score(news_text)
+                    style_features = get_style_features(news_text)
+                    
+                    pat_col1, pat_col2, pat_col3 = st.columns(3)
+                    
+                    with pat_col1:
+                        delta_col = "normal" if sentiment >= 0 else "inverse"
+                        st.metric("Sentiment Score", f"{sentiment:.2f}", delta=f"{'Positive' if sentiment >= 0 else 'Negative'}", delta_color=delta_col)
+                    
+                    with pat_col2:
+                        st.metric("Exclamations", int(style_features[0]))
+                        st.metric("Questions", int(style_features[1]))
+                    
+                    with pat_col3:
+                        st.metric("Capital Letter Ratio", f"{style_features[2]*100:.1f}%")
+                        st.metric("Avg Sentence Length", f"{style_features[3]:.1f}")
+                    
+                    st.divider()
+                    
+                    st.subheader("Key Influential Features")
+                    contributions = explain_prediction(news_text, model, vectorizer, top_n=10)
+                    
+                    if contributions:
+                        st.write("Top words that influenced this prediction:")
+                        
+                        inf_col1, inf_col2 = st.columns(2)
+                        
+                        with inf_col1:
+                            st.write("**Indicates Real News:**")
+                            for word, score in contributions:
+                                if score > 0:
+                                    st.markdown(f"<span style='color:green'>• {word}</span> (score: {score:.4f})", unsafe_allow_html=True)
+                        
+                        with inf_col2:
+                            st.write("**Indicates Fake News:**")
+                            for word, score in contributions:
+                                if score < 0:
+                                    st.markdown(f"<span style='color:red'>• {word}</span> (score: {score:.4f})", unsafe_allow_html=True)
+                    else:
+                        st.info("No significant influencing words detected.")
+                    
+                    st.divider()
                     
                     st.subheader("Interpretation")
                     if classification == "CREDIBLE":
@@ -152,14 +201,5 @@ if analyze_btn:
                     
             except Exception as e:
                 st.error(f"Error during analysis: {str(e)}")
-
-st.sidebar.header("About")
-st.sidebar.info(
-    "This tool analyzes news articles for credibility using "
-    "machine learning and NLP techniques."
-)
-
-st.sidebar.header("Settings")
-show_detailed = st.sidebar.checkbox("Show detailed analysis", value=False)
-include_source = st.sidebar.checkbox("Include source analysis", value=True)
-confidence_threshold = st.sidebar.slider("Confidence threshold", 0.0, 1.0, 0.5, 0.1)
+                import traceback
+                st.error(traceback.format_exc())
