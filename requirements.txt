@@ -2,8 +2,8 @@ nltk==3.9.2
 pandas==3.0.1
 scikit_learn==1.8.0
 tqdm==4.67.1
-streamlit
-altair
+streamlit>=1.30
+altair==4.2.2
 blinker
 cachetools
 click
