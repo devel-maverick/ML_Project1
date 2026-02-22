@@ -1,8 +1,13 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from preprocessing.preprocess import load_data, preprocess_entire_dataframe
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, confusion_matrix
+import joblib
 
 
 df = load_data("data/WELFake_Dataset.csv")
@@ -29,3 +34,9 @@ print("\nClassification Report:\n")
 print(classification_report(y_test, y_pred))
 print("\nConfusion Matrix:\n")
 print(confusion_matrix(y_test, y_pred))
+
+os.makedirs("models", exist_ok=True)
+joblib.dump(model, "models/classifier.pkl")
+joblib.dump(vectorizer, "models/vectorizer.pkl")
+print("\nModel saved to models/classifier.pkl")
+print("Vectorizer saved to models/vectorizer.pkl")
