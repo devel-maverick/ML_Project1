@@ -3,9 +3,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, confusion_matrix
+from config import DATA_PATH, MODEL_DIR
+import joblib
 
-
-df = load_data("data/WELFake_Dataset.csv")
+df = load_data(DATA_PATH)
 print("Dataset shape:", df.shape)
 print("Label distribution:\n", df["label"].value_counts())
 
@@ -29,3 +30,8 @@ print("\nClassification Report:\n")
 print(classification_report(y_test, y_pred))
 print("\nConfusion Matrix:\n")
 print(confusion_matrix(y_test, y_pred))
+
+MODEL_DIR.mkdir(exist_ok = True)
+
+joblib.dump(model, MODEL_DIR / "classifier.pkl")
+joblib.dump(vectorizer, MODEL_DIR / "vectorizer.pkl")
