@@ -10,3 +10,4 @@ click
 pillow
 requests
 beautifulsoup4
+textblob
