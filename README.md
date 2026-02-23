@@ -21,8 +21,7 @@ Regression classification - Linguistic pattern analysis - Explainable AI
 (feature contribution analysis) - Interactive Streamlit-based user
 interface
 
-The application currently supports: - Text input
-and in future would support: - URL scraping  - File upload(text files)
+The application currently supports: - Text input - URL scraping  - File upload(.txt files)
 
 ------------------------------------------------------------------------
 
