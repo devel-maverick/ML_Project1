@@ -1,10 +1,8 @@
+from setup_nltk import download_nltk_resources
+download_nltk_resources()
+from src.predict import predict_article, get_model_and_vectorizer
 import streamlit as st
-import joblib
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from preprocessing.preprocess import preprocess_pipeline
 import requests
 from bs4 import BeautifulSoup
 import re
@@ -13,12 +11,6 @@ from features.feature_engineering import get_sentiment_score, get_style_features
 from src.explain import explain_prediction
 
 st.set_page_config(page_title="News Credibility Analyzer", page_icon="📰", layout="wide")
-
-@st.cache_resource
-def load_model():
-    model = joblib.load("models/classifier.pkl")
-    vectorizer = joblib.load("models/vectorizer.pkl")
-    return model, vectorizer
 
 def scrape_url(url):
     try:
@@ -44,18 +36,6 @@ def scrape_url(url):
     except Exception as e:
         st.error(f"Error scraping URL: {str(e)}")
         return "", ""
-
-def predict_news(news_text, model, vectorizer):
-    processed = preprocess_pipeline(news_text)
-    features = vectorizer.transform([processed])
-    prediction = model.predict(features)[0]
-    probability = model.predict_proba(features)[0]
-    confidence = max(probability)
-    
-    classification = "CREDIBLE" if prediction == 1 else "FAKE NEWS"
-    credibility_score = probability[1] if len(probability) > 1 else confidence
-    
-    return classification, credibility_score, confidence
 
 st.title("📰 Intelligent News Credibility Analyzer")
 st.markdown("Analyze news articles for credibility and misinformation risk")
@@ -109,9 +89,7 @@ if analyze_btn:
         st.warning("Please upload a file.")
     else:
         with st.spinner("Analyzing article..."):
-            try:
-                model, vectorizer = load_model()
-                
+            try:                
                 if input_method == "Enter URL":
                     scraped_title, scraped_text = scrape_url(url)
                     if not scraped_text:
@@ -123,7 +101,15 @@ if analyze_btn:
                         st.text_area(f"Title: {title}", news_text, height=200, disabled=True)
                 
                 if news_text:
-                    classification, credibility_score, confidence = predict_news(news_text, model, vectorizer)
+                    result = predict_article(news_text)
+                    prediction = result["prediction"]
+                    confidence = result["confidence"]
+                    probabilities = result["probabilities"]
+                    if prediction == 1: 
+                        classification = "CREDIBLE"
+                    else: 
+                        classification = "FAKE NEWS"
+                    credibility_score = probabilities[1]
                     
                     st.session_state.article_count += 1
                     if classification == "CREDIBLE":
@@ -168,6 +154,7 @@ if analyze_btn:
                     st.divider()
                     
                     st.subheader("Key Influential Features")
+                    model, vectorizer = get_model_and_vectorizer()
                     contributions = explain_prediction(news_text, model, vectorizer, top_n=10)
                     
                     if contributions:
