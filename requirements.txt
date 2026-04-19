@@ -1,8 +1,10 @@
 nltk
 pandas
 scikit-learn
+matplotlib
 tqdm
 streamlit>=1.30
+pytest
 blinker
 cachetools
 click

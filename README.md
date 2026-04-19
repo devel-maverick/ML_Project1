@@ -125,10 +125,38 @@ venv\Scripts\activate     # Windows
 pip install -r requirements.txt
 ```
 
-### 4️⃣ Run Application
+### 4️⃣ Download NLTK Data
+
+``` bash
+python setup_nltk.py
+```
+
+> **Note:** NLTK downloads `punkt`, `punkt_tab`, `stopwords`, and `wordnet` to
+> `~/nltk_data` by default.  To use a custom path set the `NLTK_DATA`
+> environment variable:
+>
+> ```bash
+> export NLTK_DATA=/path/to/nltk_data
+> ```
+
+### 5️⃣ (Optional) Train the Model
+
+``` bash
+python src/train.py
+```
+
+This re-trains the classifier and saves evaluation plots to `reports/`.
+
+### 6️⃣ Run Application
 
 ``` bash
 streamlit run app.py
+```
+
+### 7️⃣ Run Unit Tests
+
+``` bash
+pytest tests/ -v
 ```
 
 ------------------------------------------------------------------------

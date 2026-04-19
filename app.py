@@ -2,8 +2,12 @@
 from setup_nltk import download_nltk_resources
 download_nltk_resources()
 
+import os
 import re
 import time
+import traceback
+from pathlib import Path
+
 import numpy as np
 import streamlit as st
 import requests
@@ -78,13 +82,17 @@ elif input_method == "Enter URL":
 elif input_method == "Upload File":
     uploaded_file = st.file_uploader("Upload text file", type=["txt"])
     if uploaded_file:
-        news_text = uploaded_file.read().decode("utf-8")
+        try:
+            news_text = uploaded_file.read().decode("utf-8")
+            st.caption(f"📄 {uploaded_file.name} — {len(news_text):,} characters loaded")
+        except UnicodeDecodeError:
+            st.error("Could not read file: please upload a UTF-8 encoded .txt file.")
 
 st.divider()
 
 
-# --- Two Tabs ---
-tab1, tab2 = st.tabs(["📊 Quick Analysis", "🤖 AI Agent Analysis"])
+# --- Three Tabs ---
+tab1, tab2, tab3 = st.tabs(["📊 Quick Analysis", "🤖 AI Agent Analysis", "📈 Model Evaluation"])
 
 
 with tab1:
@@ -99,18 +107,20 @@ with tab1:
         elif input_method == "Upload File" and not news_text.strip():
             st.warning("Please upload a file.")
         else:
+            # Handle URL scraping before spinner so content stays visible
+            if input_method == "Enter URL":
+                with st.spinner("Scraping article…"):
+                    scraped_title, scraped_text = scrape_url(url)
+                if not scraped_text:
+                    st.error("Could not extract content from URL.")
+                    st.stop()
+                news_text = scraped_text
+                title = scraped_title
+                with st.expander(f"📄 Scraped: {title}", expanded=False):
+                    st.write(news_text[:2000] + ("…" if len(news_text) > 2000 else ""))
+
             with st.spinner("Analyzing..."):
                 try:
-                    # Handle URL input
-                    if input_method == "Enter URL":
-                        scraped_title, scraped_text = scrape_url(url)
-                        if not scraped_text:
-                            st.error("Could not extract content from URL.")
-                        else:
-                            news_text = scraped_text
-                            title = scraped_title
-                            st.text_area(f"Title: {title}", news_text, height=150, disabled=True)
-
                     if news_text:
                         result = predict_article(news_text)
                         prediction = result["prediction"]
@@ -126,6 +136,22 @@ with tab1:
                         else:
                             st.session_state.fake_count += 1
 
+                        # Fetch model once for explain + session state
+                        model, vectorizer = get_model_and_vectorizer()
+                        sentiment = get_sentiment_score(news_text)
+                        style_features = get_style_features(news_text)
+                        contributions = explain_prediction(news_text, model, vectorizer, top_n=10)
+
+                        # Persist result in session state so tab-switching doesn't clear it
+                        st.session_state["quick_result"] = {
+                            "credibility_score": credibility_score,
+                            "classification": classification,
+                            "confidence": confidence,
+                            "sentiment": sentiment,
+                            "style_features": style_features,
+                            "contributions": contributions,
+                        }
+
                         # Show results
                         st.subheader("Analysis Results")
                         c1, c2, c3 = st.columns(3)
@@ -137,9 +163,6 @@ with tab1:
 
                         # Patterns
                         st.subheader("Detected Patterns")
-                        sentiment = get_sentiment_score(news_text)
-                        style_features = get_style_features(news_text)
-
                         p1, p2, p3 = st.columns(3)
                         with p1:
                             delta_col = "normal" if sentiment >= 0 else "inverse"
@@ -157,8 +180,6 @@ with tab1:
 
                         # Top words
                         st.subheader("Key Influential Features")
-                        model, vectorizer = get_model_and_vectorizer()
-                        contributions = explain_prediction(news_text, model, vectorizer, top_n=10)
 
                         if contributions:
                             w1, w2 = st.columns(2)
@@ -184,8 +205,16 @@ with tab1:
 
                 except Exception as e:
                     st.error(f"Error: {str(e)}")
-                    import traceback
                     st.error(traceback.format_exc())
+
+    # Show last result if user switched tabs and came back
+    elif "quick_result" in st.session_state:
+        r = st.session_state["quick_result"]
+        st.info("Showing last analysis result. Submit again to refresh.")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Credibility Score", f"{r['credibility_score']:.2%}")
+        c2.metric("Classification", r["classification"])
+        c3.metric("Confidence", f"{r['confidence']:.2%}")
 
 with tab2:
     st.markdown("*Full AI analysis with LLM reasoning, source verification, and PDF export*")
@@ -227,7 +256,7 @@ with tab2:
                 progress_callback=on_progress
             )
 
-            progress.progress(100)
+            progress.progress(1.0)
             status.success(f"✅ Done in {state['execution_time']:.1f}s")
 
             report = state.get("final_report", {})
@@ -330,3 +359,30 @@ with tab2:
                                     use_container_width=True)
             except Exception as e:
                 st.error(f"PDF error: {str(e)}")
+
+with tab3:
+    st.markdown("*Evaluation visualisations generated by `src/train.py`.*")
+    REPORTS_DIR = Path(__file__).resolve().parent / "reports"
+
+    cm_path = REPORTS_DIR / "confusion_matrix.png"
+    roc_path = REPORTS_DIR / "roc_curve.png"
+
+    if not cm_path.exists() and not roc_path.exists():
+        st.info(
+            "No evaluation plots found. Run `python src/train.py` once to generate "
+            "`reports/confusion_matrix.png` and `reports/roc_curve.png`."
+        )
+    else:
+        col_left, col_right = st.columns(2)
+        with col_left:
+            if cm_path.exists():
+                st.subheader("Confusion Matrix")
+                st.image(str(cm_path))
+            else:
+                st.warning("confusion_matrix.png not found.")
+        with col_right:
+            if roc_path.exists():
+                st.subheader("ROC Curve")
+                st.image(str(roc_path))
+            else:
+                st.warning("roc_curve.png not found.")

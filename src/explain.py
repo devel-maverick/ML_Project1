@@ -1,6 +1,30 @@
+"""explain.py — Compute per-word feature contributions for a prediction."""
+
 import numpy as np
 
+
 def explain_prediction(text, model, vectorizer, top_n=10):
+    """Return the top-*n* words that most influenced the model's prediction.
+
+    Each word is paired with its signed contribution score
+    (positive → towards real news, negative → towards fake news).
+
+    Parameters
+    ----------
+    text : str
+        Raw or preprocessed article text.
+    model : LogisticRegression
+        Fitted classifier with a *coef_* attribute.
+    vectorizer : TfidfVectorizer
+        Fitted vectorizer used to transform *text*.
+    top_n : int
+        Maximum number of contributions to return.
+
+    Returns
+    -------
+    list[tuple[str, float]]
+        ``[(word, contribution_score), …]`` sorted by descending |score|.
+    """
 
     # Transform text
     tfidf_vector = vectorizer.transform([text])
