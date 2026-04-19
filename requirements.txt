@@ -14,8 +14,5 @@ textblob
 # ── Milestone 2: Agentic AI Dependencies ──
 groq                # Groq LLM API client
 fpdf2               # PDF report generation
-fastapi             # API framework for CORS endpoint
-uvicorn             # ASGI server for FastAPI
-flask-cors          # CORS library for cross-origin resource sharing
 python-dotenv       # Load environment variables from .env file
 lxml                # XML parser for RSS feeds (BBC, Reuters, Google News)
