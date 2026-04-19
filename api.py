@@ -1,7 +1,3 @@
-"""
-FastAPI endpoint with CORS support.
-Run with: uvicorn api:app --port 8000
-"""
 
 from setup_nltk import download_nltk_resources
 download_nltk_resources()
@@ -13,8 +9,6 @@ from typing import Optional
 from src.agent import run_agent
 
 app = FastAPI(title="News Credibility API", version="2.0.0")
-
-# CORS - allow all origins (restrict in production)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -52,7 +46,6 @@ def health_check():
 
 @app.post("/api/analyze", response_model=AnalyzeResponse)
 def analyze_article(request: AnalyzeRequest):
-    """Run the full agent pipeline and return structured results."""
     state = run_agent(
         article_text=request.article_text,
         article_title=request.article_title

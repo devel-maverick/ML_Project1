@@ -1,8 +1,3 @@
-"""
-Main Streamlit App - News Credibility Analyzer
-Tab 1: Quick Analysis (ML only, fast)
-Tab 2: AI Agent Analysis (full pipeline with LLM + verification + PDF export)
-"""
 
 from setup_nltk import download_nltk_resources
 download_nltk_resources()
@@ -92,9 +87,6 @@ st.divider()
 tab1, tab2 = st.tabs(["📊 Quick Analysis", "🤖 AI Agent Analysis"])
 
 
-# ============================================
-# TAB 1: Quick Analysis (ML only)
-# ============================================
 with tab1:
     st.markdown("*Fast ML-based classification — no API key needed*")
     analyze_btn = st.button("⚡ Quick Analyze", type="primary", use_container_width=True, key="quick")
@@ -195,10 +187,6 @@ with tab1:
                     import traceback
                     st.error(traceback.format_exc())
 
-
-# ============================================
-# TAB 2: AI Agent Analysis (Full Pipeline)
-# ============================================
 with tab2:
     st.markdown("*Full AI analysis with LLM reasoning, source verification, and PDF export*")
     agent_btn = st.button("🤖 Run AI Agent Analysis", type="primary",
