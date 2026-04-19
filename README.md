@@ -167,6 +167,7 @@ The project is deployed using **Streamlit Community Cloud**.
 
 Public URL:\
 https://news-credibility-analyzer.streamlit.app/
+https://mlproject1-2ltkmtwagfee7xrtlf7jdn.streamlit.app/
 ------------------------------------------------------------------------
 
 ## 📁 Project Structure
